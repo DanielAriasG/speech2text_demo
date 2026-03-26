@@ -24,8 +24,9 @@ graph TD
     end
 
     subgraph "Backend API"
-    API -->|Route| Transcribe[/api/transcribe]
-    API -->|Route| Stream[/api/ws/stream]
+    API -->|Route| Transcribe["/api/transcribe"]
+    API -->|Route| Stream["/api/ws/stream"]
+    API -->|Route| OpenAI["/v1/audio/transcriptions"]
     end
 
     subgraph "Core Logic"
