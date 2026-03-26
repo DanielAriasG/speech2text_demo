@@ -9,6 +9,7 @@ function App() {
   const [exports, setExports] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -64,6 +65,16 @@ function App() {
     }
   }
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(transcription)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+    }
+  }
+
   return (
     <div className="App">
       <h1>Modular ASR Platform</h1>
@@ -86,11 +97,24 @@ function App() {
           {loading ? 'Transcribing...' : 'Transcribe'}
         </button>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
 
         {transcription && (
-          <div className="result">
-            <h2>Transcription:</h2>
+          <div className="result" aria-live="polite">
+            <div className="result-header">
+              <h2>Transcription:</h2>
+              <button
+                onClick={handleCopy}
+                className="copy-button"
+                aria-label={copied ? 'Transcription copied' : 'Copy transcription to clipboard'}
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
             <p>{transcription}</p>
 
             {diarization && diarization.length > 0 && (
