@@ -5,6 +5,8 @@ function App() {
   const [file, setFile] = useState(null)
   const [model, setModel] = useState('whisper')
   const [transcription, setTranscription] = useState('')
+  const [diarization, setDiarization] = useState([])
+  const [exports, setExports] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,6 +23,8 @@ function App() {
     setLoading(true)
     setError('')
     setTranscription('')
+    setDiarization([])
+    setExports(null)
 
     const formData = new FormData()
     formData.append('file', file)
@@ -33,15 +37,30 @@ function App() {
       })
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`)
+        const errorData = await response.json()
+        throw new Error(errorData.detail || `Error: ${response.statusText}`)
       }
 
       const data = await response.json()
       setTranscription(data.transcription)
+      setDiarization(data.diarization)
+      setExports(data.exports)
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDownload = () => {
+    if (exports && exports.txt) {
+      const blob = new Blob([atob(exports.txt)], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'transcription.txt'
+      a.click()
+      URL.revokeObjectURL(url)
     }
   }
 
@@ -73,6 +92,25 @@ function App() {
           <div className="result">
             <h2>Transcription:</h2>
             <p>{transcription}</p>
+
+            {diarization && diarization.length > 0 && (
+              <div className="diarization">
+                <h3>Speaker Diarization:</h3>
+                <ul>
+                  {diarization.map((segment, idx) => (
+                    <li key={idx}>
+                      <strong>{segment.speaker}:</strong> {segment.start}s - {segment.end}s
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {exports && (
+              <div className="exports">
+                <button onClick={handleDownload}>Download TXT</button>
+              </div>
+            )}
           </div>
         )}
       </div>
