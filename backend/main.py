@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from backend.api import transcribe, stream
 from backend.core.model_registry import ModelRegistry
@@ -16,6 +17,14 @@ async def lifespan(app: FastAPI):
     # Clean up if necessary
 
 app = FastAPI(title="Modular ASR Platform", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routers
 app.include_router(transcribe.router, prefix="/api")
