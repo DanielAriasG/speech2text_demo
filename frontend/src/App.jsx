@@ -9,6 +9,7 @@ function App() {
   const [exports, setExports] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [copySuccess, setCopySuccess] = useState(false)
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -64,33 +65,93 @@ function App() {
     }
   }
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(transcription)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy!', err)
+    }
+  }
+
   return (
     <div className="App">
       <h1>Modular ASR Platform</h1>
-      <div className="card">
+      <main className="card">
         <div className="input-group">
           <label htmlFor="audio-file">Select Audio File:</label>
-          <input type="file" id="audio-file" accept="audio/*" onChange={handleFileChange} />
+          <input
+            type="file"
+            id="audio-file"
+            accept="audio/*"
+            onChange={handleFileChange}
+          />
         </div>
 
         <div className="input-group">
           <label htmlFor="model-select">Select ASR Model:</label>
-          <select id="model-select" value={model} onChange={(e) => setModel(e.target.value)}>
+          <select
+            id="model-select"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+          >
             <option value="whisper">Whisper</option>
             <option value="canary">Canary</option>
             <option value="parakeet">Parakeet</option>
           </select>
         </div>
 
-        <button onClick={handleTranscribe} disabled={loading}>
+        <button onClick={handleTranscribe} disabled={loading} aria-busy={loading}>
           {loading ? 'Transcribing...' : 'Transcribe'}
         </button>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error" role="alert" aria-live="assertive">
+            {error}
+          </p>
+        )}
 
         {transcription && (
-          <div className="result">
-            <h2>Transcription:</h2>
+          <div className="result" aria-live="polite">
+            <div className="result-header">
+              <h2>Transcription:</h2>
+              <button
+                className="copy-btn"
+                onClick={handleCopy}
+                aria-label="Copy transcription to clipboard"
+                title={copySuccess ? 'Copied!' : 'Copy to clipboard'}
+              >
+                {copySuccess ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  </svg>
+                )}
+              </button>
+            </div>
             <p>{transcription}</p>
 
             {diarization && diarization.length > 0 && (
@@ -113,7 +174,7 @@ function App() {
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }

@@ -79,9 +79,40 @@ button:disabled {
   text-align: left;
 }
 
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
 .result h2 {
-  margin-top: 0;
+  margin: 0;
   font-size: 1.25rem;
+}
+
+.copy-btn {
+  background: none;
+  border: 1px solid #e0e0e0;
+  color: #666;
+  padding: 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #ccc;
+  color: #333;
+}
+
+.copy-btn:focus-visible {
+  outline: 2px solid #646cff;
+  outline-offset: 2px;
 }
 
 .result p {
