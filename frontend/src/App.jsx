@@ -9,6 +9,18 @@ function App() {
   const [exports, setExports] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    if (!transcription) return
+    try {
+      await navigator.clipboard.writeText(transcription)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+    }
+  }
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -82,15 +94,24 @@ function App() {
           </select>
         </div>
 
-        <button onClick={handleTranscribe} disabled={loading}>
+        <button onClick={handleTranscribe} disabled={loading} aria-busy={loading}>
           {loading ? 'Transcribing...' : 'Transcribe'}
         </button>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
 
         {transcription && (
-          <div className="result">
-            <h2>Transcription:</h2>
+          <div className="result" aria-live="polite">
+            <div className="result-header">
+              <h2>Transcription:</h2>
+              <button className="copy-button" onClick={handleCopy} aria-label="Copy transcription to clipboard">
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
             <p>{transcription}</p>
 
             {diarization && diarization.length > 0 && (
