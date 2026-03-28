@@ -79,9 +79,22 @@ button:disabled {
   text-align: left;
 }
 
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
 .result h2 {
-  margin-top: 0;
+  margin: 0;
   font-size: 1.25rem;
+}
+
+.copy-button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  background-color: var(--accent, #646cff);
 }
 
 .result p {
