@@ -88,3 +88,40 @@ button:disabled {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.secondary-button {
+  background-color: #f0f0f0;
+  color: #333;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.secondary-button:hover {
+  background-color: #e0e0e0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.transcription-text {
+  background-color: #fefefe;
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 4px solid #646cff;
+}

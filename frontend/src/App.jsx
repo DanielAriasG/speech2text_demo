@@ -9,6 +9,7 @@ function App() {
   const [exports, setExports] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -64,34 +65,73 @@ function App() {
     }
   }
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(transcription)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy: ', err)
+    }
+  }
+
   return (
     <div className="App">
-      <h1>Modular ASR Platform</h1>
-      <div className="card">
+      <header>
+        <h1>Modular ASR Platform</h1>
+      </header>
+      <main className="card" aria-busy={loading}>
         <div className="input-group">
           <label htmlFor="audio-file">Select Audio File:</label>
-          <input type="file" id="audio-file" accept="audio/*" onChange={handleFileChange} />
+          <input
+            type="file"
+            id="audio-file"
+            accept="audio/*"
+            onChange={handleFileChange}
+            aria-describedby="file-help"
+          />
+          <span id="file-help" className="sr-only">
+            Select an audio file for transcription
+          </span>
         </div>
 
         <div className="input-group">
           <label htmlFor="model-select">Select ASR Model:</label>
-          <select id="model-select" value={model} onChange={(e) => setModel(e.target.value)}>
+          <select
+            id="model-select"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            aria-label="Choose transcription model"
+          >
             <option value="whisper">Whisper</option>
             <option value="canary">Canary</option>
             <option value="parakeet">Parakeet</option>
           </select>
         </div>
 
-        <button onClick={handleTranscribe} disabled={loading}>
+        <button onClick={handleTranscribe} disabled={loading} aria-live="polite">
           {loading ? 'Transcribing...' : 'Transcribe'}
         </button>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
 
         {transcription && (
-          <div className="result">
-            <h2>Transcription:</h2>
-            <p>{transcription}</p>
+          <section className="result" aria-labelledby="transcription-heading">
+            <div className="result-header">
+              <h2 id="transcription-heading">Transcription:</h2>
+              <button
+                className="secondary-button"
+                onClick={handleCopy}
+                aria-label={copied ? 'Copied to clipboard' : 'Copy transcription to clipboard'}
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <p className="transcription-text">{transcription}</p>
 
             {diarization && diarization.length > 0 && (
               <div className="diarization">
@@ -108,12 +148,18 @@ function App() {
 
             {exports && (
               <div className="exports">
-                <button onClick={handleDownload}>Download TXT</button>
+                <button
+                  className="secondary-button"
+                  onClick={handleDownload}
+                  aria-label="Download transcription as TXT file"
+                >
+                  Download TXT
+                </button>
               </div>
             )}
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   )
 }
