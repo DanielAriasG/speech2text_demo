@@ -11,30 +11,62 @@ class TestServices(unittest.TestCase):
         ModelRegistry.register("whisper", WhisperModel())
 
     def test_transcription_service_short(self):
+        import io
+        import soundfile as sf
+        import numpy as np
+
+        sr = 16000
+        t = np.linspace(0, 1, sr)
+        y = 0.5 * np.sin(2 * np.pi * 440 * t)
+
+        buf = io.BytesIO()
+        sf.write(buf, y, sr, format='WAV')
+        audio_data = buf.getvalue()
+
         service = TranscriptionService()
-        res = service.transcribe_long_form(b"short", "whisper")
-        self.assertEqual(res, "[Whisper Transcription Placeholder]")
+        res = service.transcribe_long_form(audio_data, "whisper")
+        self.assertIsInstance(res, str)
 
     def test_transcription_service_long(self):
-        # bytes_per_sec is 32000.
-        # To trigger chunking, need > 30 * 32000 = 960,000 bytes.
-        # Let's give it 1,000,000 bytes.
-        # target_secs is 24, so chunk_size is 24 * 32000 = 768,000.
-        # chunk 1: 0 to 768,000
-        # overlap is 3s * 32000 = 96,000.
-        # offset 2: 768,000 - 96,000 = 672,000
-        # chunk 2: 672,000 to 1,000,000
+        import io
+        import soundfile as sf
+        import numpy as np
+
+        # Create 40s of audio to trigger chunking (> 30s)
+        sr = 16000
+        t = np.linspace(0, 40, sr * 40)
+        y = 0.5 * np.sin(2 * np.pi * 440 * t)
+
+        buf = io.BytesIO()
+        sf.write(buf, y, sr, format='WAV')
+        audio_data = buf.getvalue()
+
         service = TranscriptionService()
-        res = service.transcribe_long_form(b"a" * 1000000, "whisper")
-        # clean_transcript replaces [ and ] with empty string.
-        # Expect "Whisper Transcription Placeholder Whisper Transcription Placeholder"
-        expected = "Whisper Transcription Placeholder Whisper Transcription Placeholder"
-        self.assertEqual(res, expected)
+        res = service.transcribe_long_form(audio_data, "whisper")
+        self.assertIsInstance(res, str)
 
     def test_audio_preprocess(self):
+        import io
+        import soundfile as sf
+        import numpy as np
         service = AudioService()
-        data = b"some data"
-        self.assertEqual(service.preprocess(data), data)
+
+        # Create a simple 1s sine wave at 44.1kHz
+        sr = 44100
+        t = np.linspace(0, 1, sr)
+        y = 0.5 * np.sin(2 * np.pi * 440 * t)
+
+        input_wav = io.BytesIO()
+        sf.write(input_wav, y, sr, format='WAV')
+        data = input_wav.getvalue()
+
+        processed_data = service.preprocess(data)
+        self.assertNotEqual(processed_data, data)
+
+        # Verify processed data is 16kHz
+        output_wav = io.BytesIO(processed_data)
+        y_out, sr_out = sf.read(output_wav)
+        self.assertEqual(sr_out, 16000)
 
     def test_export_txt(self):
         service = ExportService()
@@ -44,6 +76,7 @@ class TestServices(unittest.TestCase):
 
     def test_export_pdf(self):
         service = ExportService()
-        transcription = "Hello"
+        transcription = "Hello World"
         res = service.export_to_pdf(transcription)
-        self.assertIn(b"PDF Content Placeholder", res)
+        # Check for PDF header
+        self.assertTrue(res.startswith(b"%PDF"))

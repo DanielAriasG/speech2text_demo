@@ -1,3 +1,5 @@
+import io
+import soundfile as sf
 from typing import List
 from backend.core.model_registry import ModelRegistry
 
@@ -6,7 +8,7 @@ class TranscriptionService:
         self.target_secs = target_secs
         self.max_secs = max_secs
         self.overlap_secs = overlap_secs
-        # Assuming 16kHz mono 16-bit PCM for byte calculations
+        # 16kHz mono 16-bit PCM = 16000 samples/sec * 2 bytes/sample = 32000 bytes/sec
         self.bytes_per_sec = 32000
 
     def transcribe_long_form(self, audio_data: bytes, model_name: str) -> str:
@@ -18,26 +20,35 @@ class TranscriptionService:
         max_bytes = self.max_secs * self.bytes_per_sec
 
         if total_bytes <= max_bytes:
-            return model.transcribe(audio_data)
+            return model.transcribe(audio_data).strip()
 
-        chunk_size = self.target_secs * self.bytes_per_sec
-        overlap_size = self.overlap_secs * self.bytes_per_sec
+        # Load audio once to get samples
+        audio_fp = io.BytesIO(audio_data)
+        data, sr = sf.read(audio_fp)
+
+        total_samples = len(data)
+        chunk_samples = self.target_secs * sr
+        overlap_samples = self.overlap_secs * sr
 
         transcriptions = []
         offset = 0
 
-        while offset < total_bytes:
-            end = min(offset + chunk_size, total_bytes)
-            chunk = audio_data[offset:end]
+        while offset < total_samples:
+            end = min(offset + chunk_samples, total_samples)
+            chunk_data = data[offset:end]
 
-            chunk_transcript = model.transcribe(chunk)
-            # Remove placeholder brackets if present for cleaner stitching in this demo
-            clean_transcript = chunk_transcript.replace("[", "").replace("]", "")
-            transcriptions.append(clean_transcript)
+            # Export chunk back to WAV bytes for the model
+            chunk_fp = io.BytesIO()
+            sf.write(chunk_fp, chunk_data, sr, format='WAV')
+            chunk_bytes = chunk_fp.getvalue()
 
-            if end == total_bytes:
+            chunk_transcript = model.transcribe(chunk_bytes).strip()
+            if chunk_transcript:
+                transcriptions.append(chunk_transcript)
+
+            if end == total_samples:
                 break
 
-            offset += (chunk_size - overlap_size)
+            offset += (chunk_samples - overlap_samples)
 
         return " ".join(transcriptions)
