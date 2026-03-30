@@ -13,16 +13,55 @@ class TestASRModels(unittest.TestCase):
         ModelRegistry.register("parakeet", ParakeetModel())
 
     def test_whisper_transcribe(self):
+        # We need actual audio data since it's not a placeholder anymore
+        import io
+        import soundfile as sf
+        import numpy as np
+
+        sr = 16000
+        t = np.linspace(0, 1, sr)
+        # 440Hz sine wave doesn't have much speech, but whisper should at least process it.
+        # It might return empty string or some hallucination.
+        y = 0.5 * np.sin(2 * np.pi * 440 * t)
+
+        buf = io.BytesIO()
+        sf.write(buf, y, sr, format='WAV')
+        audio_data = buf.getvalue()
+
         model = ModelRegistry.get_model("whisper")
-        res = model.transcribe(b"dummy")
-        self.assertEqual(res, "[Whisper Transcription Placeholder]")
+        res = model.transcribe(audio_data)
+        self.assertIsInstance(res, str)
 
     def test_canary_transcribe(self):
+        import io
+        import soundfile as sf
+        import numpy as np
+
+        sr = 16000
+        t = np.linspace(0, 1, sr)
+        y = 0.5 * np.sin(2 * np.pi * 440 * t)
+
+        buf = io.BytesIO()
+        sf.write(buf, y, sr, format='WAV')
+        audio_data = buf.getvalue()
+
         model = ModelRegistry.get_model("canary")
-        res = model.transcribe(b"dummy")
-        self.assertEqual(res, "[Canary Transcription Placeholder]")
+        res = model.transcribe(audio_data)
+        self.assertIsInstance(res, str)
 
     def test_parakeet_transcribe(self):
+        import io
+        import soundfile as sf
+        import numpy as np
+
+        sr = 16000
+        t = np.linspace(0, 1, sr)
+        y = 0.5 * np.sin(2 * np.pi * 440 * t)
+
+        buf = io.BytesIO()
+        sf.write(buf, y, sr, format='WAV')
+        audio_data = buf.getvalue()
+
         model = ModelRegistry.get_model("parakeet")
-        res = model.transcribe(b"dummy")
-        self.assertEqual(res, "[Parakeet Transcription Placeholder]")
+        res = model.transcribe(audio_data)
+        self.assertIsInstance(res, str)
