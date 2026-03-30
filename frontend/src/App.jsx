@@ -9,6 +9,7 @@ function App() {
   const [exports, setExports] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [copyFeedback, setCopyFeedback] = useState(false)
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -64,13 +65,31 @@ function App() {
     }
   }
 
+  const handleCopy = async () => {
+    if (transcription) {
+      try {
+        await navigator.clipboard.writeText(transcription)
+        setCopyFeedback(true)
+        setTimeout(() => setCopyFeedback(false), 2000)
+      } catch (err) {
+        console.error('Failed to copy: ', err)
+      }
+    }
+  }
+
   return (
     <div className="App">
       <h1>Modular ASR Platform</h1>
-      <div className="card">
+      <main className="card">
         <div className="input-group">
           <label htmlFor="audio-file">Select Audio File:</label>
-          <input type="file" id="audio-file" accept="audio/*" onChange={handleFileChange} />
+          <input
+            type="file"
+            id="audio-file"
+            accept="audio/*"
+            onChange={handleFileChange}
+            aria-required="true"
+          />
         </div>
 
         <div className="input-group">
@@ -82,14 +101,23 @@ function App() {
           </select>
         </div>
 
-        <button onClick={handleTranscribe} disabled={loading}>
+        <button
+          onClick={handleTranscribe}
+          disabled={loading || !file}
+          aria-busy={loading}
+          title={!file ? 'Please select an audio file first' : ''}
+        >
           {loading ? 'Transcribing...' : 'Transcribe'}
         </button>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
 
         {transcription && (
-          <div className="result">
+          <section className="result" aria-live="polite">
             <h2>Transcription:</h2>
             <p>{transcription}</p>
 
@@ -106,14 +134,17 @@ function App() {
               </div>
             )}
 
-            {exports && (
+            {(exports || transcription) && (
               <div className="exports">
-                <button onClick={handleDownload}>Download TXT</button>
+                <button onClick={handleCopy} aria-label="Copy transcription to clipboard">
+                  {copyFeedback ? 'Copied!' : 'Copy'}
+                </button>
+                {exports && <button onClick={handleDownload}>Download TXT</button>}
               </div>
             )}
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   )
 }
