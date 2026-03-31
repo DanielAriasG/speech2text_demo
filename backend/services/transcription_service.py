@@ -1,7 +1,8 @@
 import io
 import soundfile as sf
-from typing import List
+from typing import List, Dict, Any
 from backend.core.model_registry import ModelRegistry
+from backend.core.audio_interface import IAudioService
 
 class TranscriptionService:
     def __init__(self, target_secs: int = 24, max_secs: int = 30, overlap_secs: int = 3):
@@ -52,3 +53,44 @@ class TranscriptionService:
             offset += (chunk_samples - overlap_samples)
 
         return " ".join(transcriptions)
+
+    def transcribe_with_diarization(
+        self, audio_data: bytes, model_name: str, diarization_segments: List[Dict[str, Any]], audio_service: IAudioService
+    ) -> List[Dict[str, Any]]:
+        """
+        Merge consecutive segments for the same speaker, then transcribe each segment.
+        """
+        if not diarization_segments:
+            return []
+
+        merged_segments = []
+        current_seg = diarization_segments[0].copy()
+        for next_seg in diarization_segments[1:]:
+            if next_seg["speaker"] == current_seg["speaker"]:
+                current_seg["end"] = next_seg["end"]
+            else:
+                merged_segments.append(current_seg)
+                current_seg = next_seg.copy()
+        merged_segments.append(current_seg)
+
+        model = ModelRegistry.get_model(model_name)
+        if not model:
+            raise ValueError(f"Model {model_name} not found")
+
+        final_segments = []
+        for segment in merged_segments:
+            start_sec = segment["start"]
+            end_sec = segment["end"]
+            speaker = segment["speaker"]
+
+            segment_audio = audio_service.get_segment(audio_data, start_sec, end_sec)
+            transcript = model.transcribe(segment_audio).strip()
+
+            final_segments.append({
+                "start": start_sec,
+                "end": end_sec,
+                "speaker": speaker,
+                "text": transcript
+            })
+
+        return final_segments

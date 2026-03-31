@@ -4,6 +4,7 @@ import './App.css'
 function App() {
   const [file, setFile] = useState(null)
   const [model, setModel] = useState('whisper')
+  const [diarizationModel, setDiarizationModel] = useState('pyannote')
   const [transcription, setTranscription] = useState('')
   const [diarization, setDiarization] = useState([])
   const [exports, setExports] = useState(null)
@@ -29,6 +30,7 @@ function App() {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('model_name', model)
+    formData.append('diarization_model', diarizationModel)
 
     try {
       const response = await fetch('http://localhost:8000/api/transcribe', {
@@ -64,6 +66,12 @@ function App() {
     }
   }
 
+  const getSpeakerClass = (speaker) => {
+    if (!speaker) return ''
+    const num = speaker.replace(/\D/g, '')
+    return `speaker-${num % 4}`
+  }
+
   return (
     <div className="App">
       <h1>Modular ASR Platform</h1>
@@ -82,28 +90,38 @@ function App() {
           </select>
         </div>
 
+        <div className="input-group">
+          <label htmlFor="diar-model-select">Diarization Model:</label>
+          <select id="diar-model-select" value={diarizationModel} onChange={(e) => setDiarizationModel(e.target.value)}>
+            <option value="pyannote">Pyannote</option>
+            <option value="sortformer">Sortformer 4-Speaker</option>
+          </select>
+        </div>
+
         <button onClick={handleTranscribe} disabled={loading}>
           {loading ? 'Transcribing...' : 'Transcribe'}
         </button>
 
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
 
         {transcription && (
-          <div className="result">
-            <h2>Transcription:</h2>
-            <p>{transcription}</p>
+          <div className="result" aria-live="polite">
+            <h2>Transcription Results:</h2>
 
-            {diarization && diarization.length > 0 && (
-              <div className="diarization">
-                <h3>Speaker Diarization:</h3>
-                <ul>
-                  {diarization.map((segment, idx) => (
-                    <li key={idx}>
-                      <strong>{segment.speaker}:</strong> {segment.start}s - {segment.end}s
-                    </li>
-                  ))}
-                </ul>
+            {diarization && diarization.length > 0 ? (
+              <div className="diarization-view">
+                {diarization.map((segment, idx) => (
+                  <div key={idx} className={`segment ${getSpeakerClass(segment.speaker)}`}>
+                    <div className="segment-info">
+                      <span className="speaker-name">{segment.speaker}</span>
+                      <span className="timestamp">{segment.start.toFixed(2)}s - {segment.end.toFixed(2)}s</span>
+                    </div>
+                    <p className="segment-text">{segment.text}</p>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <p>{transcription}</p>
             )}
 
             {exports && (

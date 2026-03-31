@@ -16,3 +16,18 @@ class AudioService(IAudioService):
         output_fp = io.BytesIO()
         sf.write(output_fp, y, 16000, format='WAV')
         return output_fp.getvalue()
+
+    def get_segment(self, audio_data: bytes, start_sec: float, end_sec: float) -> bytes:
+        """
+        Extract a segment of audio data.
+        """
+        audio_fp = io.BytesIO(audio_data)
+        y, sr = sf.read(audio_fp)
+
+        start_sample = int(start_sec * sr)
+        end_sample = int(end_sec * sr)
+        segment_data = y[start_sample:end_sample]
+
+        output_fp = io.BytesIO()
+        sf.write(output_fp, segment_data, sr, format='WAV')
+        return output_fp.getvalue()
