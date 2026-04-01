@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # Exposes your hugging-face access to bypass the standard container gate
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./backend:/app/backend
+      - ./tests:/app/tests
+    deploy:
+      resources:
+        reservations:
+          # Automatically assign all accessible GPUs to process PyTorch inference chunks
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend

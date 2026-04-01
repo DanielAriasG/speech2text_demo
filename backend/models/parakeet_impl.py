@@ -12,19 +12,27 @@ class ParakeetModel(IASRModel):
         )
 
     def transcribe(self, audio_data: bytes) -> str:
-        # The pipeline can handle raw bytes if they are in a supported format
-        # but often it's safer to provide a numpy array or a file.
-        # We'll use a temporary file for consistency with Whisper.
-        import tempfile
-        import os
-
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-            tmp_file.write(audio_data)
-            tmp_path = tmp_file.name
+        import io
+        import soundfile as sf
+        import numpy as np
+        
+        audio_np, sr = sf.read(io.BytesIO(audio_data), dtype="float32")
+        
+        if len(audio_np.shape) > 1:
+            audio_np = audio_np.mean(axis=1)
+            
+        if sr != 16000:
+            import librosa
+            audio_np = librosa.resample(audio_np, orig_sr=sr, target_sr=16000)
 
         try:
-            result = self.pipe(tmp_path)
-            return result.get("text", "").strip()
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+            # Transformers ASR pipeline allows raw numpy arrays
+            result = self.pipe(audio_np)
+            if isinstance(result, list) and len(result) > 0:
+                return result[0].get("text", "").strip()
+            elif isinstance(result, dict):
+                return result.get("text", "").strip()
+            return str(result)
+        except Exception as e:
+            print(f"Parakeet inference error: {e}")
+            return ""

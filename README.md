@@ -1,143 +1,85 @@
 # Modular ASR Platform
 
-A modular, SOLID-compliant speech-to-text backend built with FastAPI, supporting multiple ASR models like Whisper, Canary, and Parakeet.
+A full-stack architecture that transforms live audio components into multi-colored UI document spaces! By harnessing OpenAI Whisper alongside Pyannote Diarization architectures, it seamlessly provides Live Microphone Dictation and Multi-Format (DOCX/PDF) Document transcription chunks.
 
-## Features
+---
 
-- **Multi-Model Support**: Integrated with Whisper-large-v3, NVIDIA Canary, and NVIDIA Parakeet.
-- **Modular Architecture**: Built with Abstract Base Classes (ABCs) for high maintainability and loose coupling.
-- **Real-time Streaming**: Supports WebSockets for near-real-time streaming transcription.
-- **Speaker Diarization**: Handles speaker identification as a separate component.
-- **Flexible Export**: Export transcriptions to TXT, DOCX, and PDF formats.
-- **Audio Preprocessing**: Automatic normalization (16kHz mono) for optimal model performance.
+## 🛠 Prerequisites
 
------
+Ensure you have the following installed locally on your system:
+- **Python 3.11+**
+- **Node.js 20+**
+- **FFMPEG** (Required down path natively if running non-Docker)
+- A valid **HuggingFace API Token** (`HF_TOKEN`) mapped to the `pyannote/speaker-diarization-3.1` model terms agreement.
 
-## Architecture
+---
 
-The system follows a modular architecture where AI models are loaded once into VRAM at startup and managed via a `ModelRegistry`.
+## 💻 Local Installation & Setup
 
-```mermaid
-graph TD
-    subgraph Frontend
-    UI[React Web Interface] -->|HTTP/WS| API[FastAPI Backend]
-    end
+If you prefer to run the API endpoints and Frontend React logic natively on your host machine without Docker, follow these explicit instructions.
 
-    subgraph "Backend API"
-    API -->|Route| Transcribe["/api/transcribe"]
-    API -->|Route| Stream["/api/ws/stream"]
-    API -->|Route| OpenAI["/v1/audio/transcriptions"]
-    end
-
-    subgraph "Core Logic"
-    Transcribe --> AudioSrv[AudioService: Preprocessing]
-    AudioSrv --> Reg[ModelRegistry]
-    Reg -->|Get Model| Models{ASR Models}
-
-    subgraph "ASR Implementations"
-    Models --> Whisper[WhisperModel]
-    Models --> Canary[CanaryModel]
-    Models --> Parakeet[ParakeetModel]
-    end
-
-    Transcribe --> Diarization[DiarizationService]
-    Transcribe --> Export[ExportService]
-    end
-
-    subgraph Output
-    Export --> TXT[TXT Export]
-    Export --> DOCX[DOCX Export]
-    Export --> PDF[PDF Export]
-    end
-
-    style UI fill:#f9f,stroke:#333,stroke-width:2px
-    style Reg fill:#bbf,stroke:#333,stroke-width:2px
-    style Models fill:#9ff,stroke:#333,stroke-width:2px
-```
-
-## Installation
-
-### Backend Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd modular-asr-platform
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the server**:
-   ```bash
-   uvicorn backend.main:app --reload
-   ```
-   The API will be available at `http://localhost:8000`.
-
-### Frontend Setup
-
-1. **Navigate to the frontend directory**:
-   ```bash
-   cd frontend
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Run the development server**:
-   ```bash
-   npm run dev
-   ```
-   The web interface will be available at `http://localhost:5173`.
-
------
-
-## Usage
-
-### 1. Web Interface
-Use the React-based web interface to upload audio files, select your preferred ASR model, and view/export results.
-
-### 2. API Endpoints
-
-**Transcribe an audio file:**
+### 1. Backend API (Python)
+The entire heavy-lifting inference models are executed under FastAPI.
 ```bash
-curl -X 'POST' \
-  'http://localhost:8000/api/transcribe' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F 'model_name=whisper' \
-  -F 'file=@audio.wav'
+# Move into root
+cd "ASR Platform"
+
+# Initialize Virtual Environment
+python -m venv venv
+
+# Activate Environment
+# Windows:
+.\venv\Scripts\activate
+# Mac/Linux:
+source venv/bin/activate
+
+# Install strictly tracked dependencies
+pip install -r requirements.txt
+
+# Store your gated authentication Token
+# Windows:
+$env:HF_TOKEN="your_hf_token_here"
+# Mac/Linux:
+export HF_TOKEN="your_hf_token_here"
+
+# Spin up FastAPI locally!
+uvicorn backend.main:app --reload
 ```
 
-**Real-time Streaming (WebSocket):**
-Connect to `ws://localhost:8000/api/ws/stream` to send audio chunks and receive transcription feedback.
+### 2. Frontend UI (React)
+A stunning modular Vite deployment serving websockets.
+```bash
+cd frontend
 
------
+# Install UI modules
+npm install
 
-## Testing
+# Build UI loop
+npm run dev
+```
 
-Run the backend test suite to ensure all components are working correctly.
+The Web Application will instantly mount on `http://localhost:5173`.
+
+---
+
+## 🐳 Docker Deployment
+
+The ecosystem contains an optimized unified Docker Compose network capable of passthrough GPU execution!
 
 ```bash
-PYTHONPATH=. pytest tests/
+# Pass your gated HF token into the container architecture inline!
+HF_TOKEN="your_hf_token_code" docker-compose up --build
 ```
+* **Frontend**: Available immediately at `http://localhost:5173`
+* **Backend**: Available immediately at `http://localhost:8000`
 
-## Project Structure
+---
 
+## 📊 Run STT Benchmark Tooling
+
+Want to benchmark the inference algorithms across the 10-sample HuggingFace Test Suite natively? We've programmed an isolated script designed to mimic the pipecat-ai logic and return exact TTFS Latencies plus Acoustic Werner errors! Ensure your python backend environment is active, then execute:
+
+```bash
+python tests/stt_benchmark_runner.py
 ```
-/modular-asr-platform
-├── backend/               # FastAPI backend
-│   ├── api/               # API routers (REST & WebSockets)
-│   ├── core/              # Interfaces and Model Registry
-│   ├── diarization/       # Diarization logic
-│   ├── models/            # ASR model implementations
-│   └── services/          # Audio and Export services
-├── frontend/              # React frontend
-├── tests/                 # Unit tests
-├── requirements.txt       # Backend dependencies
-└── README.md              # Project documentation
-```
+This script intelligently extracts raw byte-stream chunks from PyArrow structures directly avoiding SubProcess FFMPEG decoding complications and safely logs the evaluation parameters!

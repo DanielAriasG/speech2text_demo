@@ -30,18 +30,36 @@ class CanaryModel(IASRModel):
             self.surrogate = True
 
     def transcribe(self, audio_data: bytes) -> str:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-            tmp_file.write(audio_data)
-            tmp_path = tmp_file.name
+        import io
+        import soundfile as sf
+        import numpy as np
+        
+        # HuggingFace pipeline expects 16000Hz numpy array dict
+        audio_np, sr = sf.read(io.BytesIO(audio_data), dtype="float32")
+        
+        # Convert to mono if it's stereo
+        if len(audio_np.shape) > 1:
+            audio_np = audio_np.mean(axis=1)
+            
+        # Resample to 16000Hz if necessary
+        if sr != 16000:
+            import librosa
+            audio_np = librosa.resample(audio_np, orig_sr=sr, target_sr=16000)
 
         try:
             if not self.surrogate:
-                result = self.pipe(tmp_path)
-                return result.get("text", "").strip()
+                # Transformers ASR pipeline allows raw numpy arrays
+                result = self.pipe(audio_np)
+                # Some transformers models return a list or dict
+                if isinstance(result, list) and len(result) > 0:
+                    return result[0].get("text", "").strip()
+                elif isinstance(result, dict):
+                    return result.get("text", "").strip()
+                return str(result)
             else:
                 fp16 = torch.cuda.is_available()
-                result = self.model.transcribe(tmp_path, fp16=fp16)
+                result = self.model.transcribe(audio_np, fp16=fp16)
                 return result.get("text", "").strip()
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+        except Exception as e:
+            print(f"Canary inference error: {e}")
+            return ""
