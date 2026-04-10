@@ -4,6 +4,8 @@ import soundfile as sf
 import io
 import torch
 from pyannote.audio import Pipeline
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pyannote.audio.core.io")
 from backend.core.diarization_interface import IDiarizationService
 from typing import List, Tuple
 
@@ -17,7 +19,7 @@ class PyannoteDiarization(IDiarizationService):
             # Load Pyannote 3.1 model. Note: user needs to accept conditions on Hugging Face.
             self.pipeline = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization-3.1",
-                use_auth_token=hf_token
+                token=hf_token
             )
             # Use GPU if available
             if torch.cuda.is_available():

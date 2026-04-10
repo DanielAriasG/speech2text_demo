@@ -11,7 +11,7 @@ class CanaryModel(IASRModel):
     The user specifically requested this model.
     Using transformers pipeline for accessibility.
     """
-    def __init__(self, model_id: str = "nvidia/canary-qwen-2.5b"):
+    def __init__(self, model_id: str = "nvidia/canary-1b"):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         try:
             # Attempt to use the requested NVIDIA model with transformers

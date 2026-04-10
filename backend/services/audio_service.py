@@ -3,6 +3,14 @@ import librosa
 import soundfile as sf
 from backend.core.audio_interface import IAudioService
 
+# Pre-resolve librosa's lazy modules to prevent inspect.stack() crashes 
+# with speechbrain's k2_fsa integration during audio processing.
+import librosa.core.audio as L
+_ = getattr(L, 'samplerate', None)
+_ = getattr(L, 'resampy', None)
+_ = getattr(L, 'soxr', None)
+_ = getattr(L, 'soundfile', None)
+
 class AudioService(IAudioService):
     def preprocess(self, audio_data: bytes) -> bytes:
         """
