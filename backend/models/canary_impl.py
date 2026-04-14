@@ -56,7 +56,7 @@ class CanaryModel(IASRModel):
                 if isinstance(results[0], list):
                     text = results[0][0]
                 else:
-                    text = results[0]
+                    text = results[0].text
             else:
                 text = ""
                 

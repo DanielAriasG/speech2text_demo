@@ -25,16 +25,26 @@ The entire heavy-lifting inference models are executed under FastAPI.
 cd "ASR Platform"
 
 # Initialize Virtual Environment
-python -m venv venv
+python3.11 -m venv venv
 
 # Activate Environment
 # Windows:
 .\venv\Scripts\activate
 # Mac/Linux:
 source venv/bin/activate
+# --- GPU Acceleration Setup (For CUDA 13.1+) ---
+# If you are using an NVIDIA GPU with CUDA 13.1+, perform a clean 
+# reinstallation of the Torch stack to ensure GPU visibility:
+pip uninstall torch torchvision torchaudio -y
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+
+# Verify successful GPU registration
+python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
 
 # Install strictly tracked dependencies
 pip install -r requirements.txt
+
+
 
 # Store your gated authentication Token
 # Windows:
