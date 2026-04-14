@@ -7,7 +7,7 @@ A full-stack architecture that transforms live audio components into multi-color
 ## 🛠 Prerequisites
 
 Ensure you have the following installed locally on your system:
-- **Python 3.11+**
+- **Python 3.11** (Must be `>=3.10` and `<3.14`. Python 3.14+ is currently unsupported by core audio dependencies like `numba`).
 - **Node.js 20+**
 - **FFMPEG** (Required down path natively if running non-Docker)
 - A valid **HuggingFace API Token** (`HF_TOKEN`) mapped to the `pyannote/speaker-diarization-3.1` model terms agreement.
