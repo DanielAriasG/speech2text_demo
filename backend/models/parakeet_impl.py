@@ -5,6 +5,7 @@ import torch
 import tempfile
 import soundfile as sf
 import librosa
+import types  # Required for the safe mocking of torchcodec
 from backend.core.asr_interface import IASRModel
 
 class ParakeetModel(IASRModel):
@@ -24,14 +25,29 @@ class ParakeetModel(IASRModel):
 
         try:
             # --- Windows libtorchcodec Fix ---
-            # If torchcodec is installed but broken (missing DLLs), 
-            # mock it so torchaudio/NeMo doesn't crash during import.
-            # (Note: torchaudio.set_audio_backend is deprecated and removed in >2.1)
+            # Libraries like torchaudio 2.9+ and datasets 4.0+ expect torchcodec.decoders.AudioDecoder.
+            # If we mock 'torchcodec' too simply, those libraries crash with 'no attribute' errors.
+            # We provide a nested mock structure to satisfy the attribute chain.
             if os.name == 'nt':
                 try:
                     import torchcodec
                 except Exception:
-                    sys.modules['torchcodec'] = None
+                    # Create the module hierarchy
+                    mock_codec = types.ModuleType('torchcodec')
+                    mock_decoders = types.ModuleType('torchcodec.decoders')
+                    
+                    # Add AudioDecoder to the decoders module
+                    # We use a simple class stub so isinstance/instantiation checks don't crash immediately
+                    class AudioDecoder:
+                        def __init__(self, *args, **kwargs):
+                            raise ImportError("Mock AudioDecoder: This is a fallback stub.")
+
+                    mock_decoders.AudioDecoder = AudioDecoder
+                    mock_codec.decoders = mock_decoders
+                    
+                    # Register in sys.modules so 'import torchcodec.decoders' works
+                    sys.modules['torchcodec'] = mock_codec
+                    sys.modules['torchcodec.decoders'] = mock_decoders
             # ---------------------------------
 
             import nemo.collections.asr as nemo_asr
