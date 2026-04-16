@@ -51,11 +51,13 @@ class WhisperModel(IASRModel):
             audio_np = librosa.resample(audio_np, orig_sr=sr, target_sr=16000)
 
         try:
-            # Prepare generation kwargs if language is provided
-            # Whisper expects language names like "english" or "spanish"
             generate_kwargs = {}
             if language:
                 generate_kwargs["language"] = language
+                
+            # CRUCIAL: Whisper will often attempt to translate Polish to English 
+            # unless we explicitly enforce the task to be native transcription.
+            generate_kwargs["task"] = "transcribe"
 
             result = self.pipe(audio_np, generate_kwargs=generate_kwargs)
             

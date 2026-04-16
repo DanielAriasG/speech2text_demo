@@ -10,8 +10,8 @@ from typing import Optional
 
 class ParakeetModel(IASRModel):
     """
-    Implementation for nvidia/parakeet-tdt using NeMo ASR.
-    Multilingual version supports 25+ languages automatically or via manifest.
+    Implementation for nvidia/parakeet-tdt-0.6b-v3 using NeMo ASR.
+    Multilingual version supports 25 European languages automatically.
     """
     def __init__(self, model_id: str = "nvidia/parakeet-tdt-0.6b-v3"):
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -44,9 +44,15 @@ class ParakeetModel(IASRModel):
         try:
             sf.write(tmp_path, audio_np, 16000, format='WAV')
             
-            # Parakeet v3 often handles language ID internally, 
-            # but we can pass language hints if the interface allows.
-            results = self.model.transcribe([tmp_path])
+            # Parakeet-v3 handles multilingual detection internally, however, 
+            # depending on the internal NeMo configuration, passing the exact
+            # language id can sometimes guide the decoder away from guessing incorrectly.
+            if language and hasattr(self.model, "transcribe_with_prompt"):
+                # If the NeMo version supports prompt conditioning
+                results = self.model.transcribe_with_prompt([tmp_path], prompt=f"<{language}>")
+            else:
+                # Default auto-detect pathway
+                results = self.model.transcribe([tmp_path])
             
             if isinstance(results, tuple) and len(results) > 0:
                 text = results[0][0]

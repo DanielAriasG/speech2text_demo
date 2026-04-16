@@ -10,3 +10,10 @@ env/
 *.docx
 *.pdf
 *.txt
+CommonVoice_Datasets/
+stt_advanced_benchmark.csv
+stt_advanced_benchmark_summary.csv
+stt_model_best_worst_cases.csv
+stt_multilingual_benchmark.csv
+test.py
+api_benchmark_results.csv

@@ -9,10 +9,11 @@ from typing import Optional
 
 class CanaryModel(IASRModel):
     """
-    Implementation for nvidia/canary-1b using NeMo ASR.
-    Supports English, Spanish, German, French.
+    Implementation for nvidia/canary-1b-v2 using NeMo ASR.
+    Supports 25 European Languages including Polish (pl).
     """
-    def __init__(self, model_id: str = "nvidia/canary-1b"):
+    # Upgraded from "nvidia/canary-1b" to "nvidia/canary-1b-v2" to support Polish
+    def __init__(self, model_id: str = "nvidia/canary-1b-v2"):
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         
         try:
@@ -44,8 +45,7 @@ class CanaryModel(IASRModel):
             sf.write(tmp_path, audio_np, 16000, format='WAV')
             
             # Canary requires task and source_lang tags. 
-            # Default task is 'asr'. source_lang should be ISO code (en, es, de, fr).
-            # If language isn't provided, it defaults to English.
+            # Default task is 'asr'. source_lang should be ISO code (en, es, de, fr, pl).
             src_lang = language if language else "en"
             
             results = self.model.transcribe(
