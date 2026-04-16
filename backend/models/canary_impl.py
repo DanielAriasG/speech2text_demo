@@ -8,10 +8,10 @@ from backend.core.asr_interface import IASRModel
 
 class CanaryModel(IASRModel):
     """
-    Implementation for nvidia/canary-1b-v2 using NeMo ASR.
-    Supports dynamic source and target language selection.
+    Implementation for nvidia/canary-1b using NeMo ASR.
+    Supports source_lang and target_lang for multi-task inference.
     """
-    def __init__(self, model_id: str = "nvidia/canary-1b-v2"):
+    def __init__(self, model_id: str = "nvidia/canary-1b"):
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         
         try:
@@ -22,15 +22,11 @@ class CanaryModel(IASRModel):
             )
             self.model = self.model.to(self.device)
             self.model.eval()
-            print(f"🚀 [Canary V2] Loaded successfully on {self.device}")
         except ImportError:
             print("Warning: nemo_toolkit[asr] is missing. Canary will not function.")
             self.model = None
 
     def transcribe(self, audio_data: bytes, language: str = "en") -> str:
-        """
-        Transcribes audio with specific language code (e.g., 'es', 'pl', 'en').
-        """
         if not self.model:
             return ""
             
@@ -46,20 +42,18 @@ class CanaryModel(IASRModel):
         try:
             sf.write(tmp_path, audio_np, 16000, format='WAV')
             
-            # Use the provided language for both source and target (transcription)
-            results = self.model.transcribe(
-                [tmp_path], 
-                source_lang=language, 
-                target_lang=language
-            )
+            # Canary requires source_lang and target_lang (for ASR they are the same)
+            # Defaulting to 'en' if not provided
+            lang = language if language else "en"
+            results = self.model.transcribe([tmp_path], source_lang=lang, target_lang=lang)
             
             if isinstance(results, list) and len(results) > 0:
-                first_res = results[0]
-                return (first_res.text if hasattr(first_res, 'text') else str(first_res)).strip()
+                text = results[0] # Returns list of strings
+                return str(text).strip()
             return ""
             
         except Exception as e:
-            print(f"Canary V2 NeMo inference error: {e}")
+            print(f"Canary NeMo inference error: {e}")
             return ""
         finally:
             if os.path.exists(tmp_path):

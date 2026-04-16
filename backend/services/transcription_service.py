@@ -8,10 +8,9 @@ class TranscriptionService:
         self.target_secs = target_secs
         self.max_secs = max_secs
         self.overlap_secs = overlap_secs
-        # 16kHz mono 16-bit PCM = 16000 samples/sec * 2 bytes/sample = 32000 bytes/sec
         self.bytes_per_sec = 32000
 
-    def transcribe_long_form(self, audio_data: bytes, model_name: str) -> str:
+    def transcribe_long_form(self, audio_data: bytes, model_name: str, language: str = None) -> str:
         model = ModelRegistry.get_model(model_name)
         if not model:
             raise ValueError(f"Model {model_name} not found")
@@ -20,9 +19,8 @@ class TranscriptionService:
         max_bytes = self.max_secs * self.bytes_per_sec
 
         if total_bytes <= max_bytes:
-            return model.transcribe(audio_data).strip()
+            return model.transcribe(audio_data, language=language).strip()
 
-        # Load audio once to get samples
         audio_fp = io.BytesIO(audio_data)
         data, sr = sf.read(audio_fp)
 
@@ -37,12 +35,11 @@ class TranscriptionService:
             end = min(offset + chunk_samples, total_samples)
             chunk_data = data[offset:end]
 
-            # Export chunk back to WAV bytes for the model
             chunk_fp = io.BytesIO()
             sf.write(chunk_fp, chunk_data, sr, format='WAV')
             chunk_bytes = chunk_fp.getvalue()
 
-            chunk_transcript = model.transcribe(chunk_bytes).strip()
+            chunk_transcript = model.transcribe(chunk_bytes, language=language).strip()
             if chunk_transcript:
                 transcriptions.append(chunk_transcript)
 

@@ -16,15 +16,12 @@ export_service = ExportService()
 @router.post("/transcribe")
 async def transcribe_audio(
     model_name: str = Form("whisper"),
+    language: str = Form("en"), # Added language parameter
     file: UploadFile = File(...)
 ):
-    # 1. Read file
     audio_data = await file.read()
-
-    # 2. Preprocess audio
     normalized_audio = audio_service.preprocess(audio_data)
 
-    # 3. Diarization First
     diarization_segments = diarization_service.diarize(normalized_audio)
     
     formatted_diarization = []
@@ -32,8 +29,7 @@ async def transcribe_audio(
     
     try:
         if not diarization_segments or (len(diarization_segments) == 1 and diarization_segments[0][0] == 0.0 and diarization_segments[0][1] == 1.0):
-            # Fallback if no diarization (e.g. pyannote failed) or dummy segment returned
-            full_text = transcription_service.transcribe_long_form(normalized_audio, model_name)
+            full_text = transcription_service.transcribe_long_form(normalized_audio, model_name, language=language)
             if full_text.strip():
                 formatted_diarization.append({
                     "start": 0.0,
@@ -43,7 +39,6 @@ async def transcribe_audio(
                 })
                 transcription_parts.append(full_text.strip())
         else:
-            # Slicing audio by diarization segments
             data, sr = sf.read(io.BytesIO(normalized_audio))
             for start_time, end_time, speaker in diarization_segments:
                 start_sample = int(start_time * sr)
@@ -57,7 +52,7 @@ async def transcribe_audio(
                 sf.write(chunk_fp, segment_data, sr, format='WAV')
                 chunk_bytes = chunk_fp.getvalue()
                 
-                segment_text = transcription_service.transcribe_long_form(chunk_bytes, model_name)
+                segment_text = transcription_service.transcribe_long_form(chunk_bytes, model_name, language=language)
                 
                 if segment_text and segment_text.strip():
                     formatted_diarization.append({
@@ -72,7 +67,6 @@ async def transcribe_audio(
 
     full_transcription = " ".join(transcription_parts)
 
-    # 5. Export results
     export_txt = export_service.export_to_txt(full_transcription)
     export_docx = export_service.export_to_docx(full_transcription)
     export_pdf = export_service.export_to_pdf(full_transcription)
