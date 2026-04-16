@@ -1,6 +1,6 @@
 import io
 import soundfile as sf
-from typing import List
+from typing import List, Optional
 from backend.core.model_registry import ModelRegistry
 
 class TranscriptionService:
@@ -8,9 +8,10 @@ class TranscriptionService:
         self.target_secs = target_secs
         self.max_secs = max_secs
         self.overlap_secs = overlap_secs
+        # 16kHz mono 16-bit PCM = 16000 samples/sec * 2 bytes/sample = 32000 bytes/sec
         self.bytes_per_sec = 32000
 
-    def transcribe_long_form(self, audio_data: bytes, model_name: str, language: str = None) -> str:
+    def transcribe_long_form(self, audio_data: bytes, model_name: str, language: Optional[str] = None) -> str:
         model = ModelRegistry.get_model(model_name)
         if not model:
             raise ValueError(f"Model {model_name} not found")
@@ -21,6 +22,7 @@ class TranscriptionService:
         if total_bytes <= max_bytes:
             return model.transcribe(audio_data, language=language).strip()
 
+        # Load audio once to get samples
         audio_fp = io.BytesIO(audio_data)
         data, sr = sf.read(audio_fp)
 

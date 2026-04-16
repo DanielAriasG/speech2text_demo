@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import BinaryIO, AsyncGenerator
+from typing import BinaryIO, AsyncGenerator, Optional
 
 class IASRModel(ABC):
     @abstractmethod
-    def transcribe(self, audio_data: bytes) -> str:
-        """Transcribe an audio file from bytes."""
+    def transcribe(self, audio_data: bytes, language: Optional[str] = None) -> str:
+        """Transcribe an audio file from bytes with an optional language hint."""
         pass
 
 class IStreamTranscriber(ABC):

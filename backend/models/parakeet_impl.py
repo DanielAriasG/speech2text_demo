@@ -6,11 +6,12 @@ import tempfile
 import soundfile as sf
 import librosa
 from backend.core.asr_interface import IASRModel
+from typing import Optional
 
 class ParakeetModel(IASRModel):
     """
     Implementation for nvidia/parakeet-tdt using NeMo ASR.
-    Multilingual v3 automatically detects language, but we can pass hints if the API supports it.
+    Multilingual version supports 25+ languages automatically or via manifest.
     """
     def __init__(self, model_id: str = "nvidia/parakeet-tdt-0.6b-v3"):
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -27,7 +28,7 @@ class ParakeetModel(IASRModel):
             print("Warning: nemo_toolkit[asr] is missing. Parakeet will not function.")
             self.model = None
 
-    def transcribe(self, audio_data: bytes, language: str = None) -> str:
+    def transcribe(self, audio_data: bytes, language: Optional[str] = None) -> str:
         if not self.model:
             return ""
             
@@ -43,13 +44,17 @@ class ParakeetModel(IASRModel):
         try:
             sf.write(tmp_path, audio_np, 16000, format='WAV')
             
-            # Parakeet TDT usually handles language internally, but we can provide the path
+            # Parakeet v3 often handles language ID internally, 
+            # but we can pass language hints if the interface allows.
             results = self.model.transcribe([tmp_path])
             
             if isinstance(results, tuple) and len(results) > 0:
                 text = results[0][0]
             elif isinstance(results, list) and len(results) > 0:
-                text = results[0]
+                if hasattr(results[0], 'text'):
+                    text = results[0].text
+                else:
+                    text = results[0][0]
             else:
                 text = ""
                 

@@ -5,11 +5,12 @@ import tempfile
 import soundfile as sf
 import librosa
 from backend.core.asr_interface import IASRModel
+from typing import Optional
 
 class CanaryModel(IASRModel):
     """
     Implementation for nvidia/canary-1b using NeMo ASR.
-    Supports source_lang and target_lang for multi-task inference.
+    Supports English, Spanish, German, French.
     """
     def __init__(self, model_id: str = "nvidia/canary-1b"):
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -26,7 +27,7 @@ class CanaryModel(IASRModel):
             print("Warning: nemo_toolkit[asr] is missing. Canary will not function.")
             self.model = None
 
-    def transcribe(self, audio_data: bytes, language: str = "en") -> str:
+    def transcribe(self, audio_data: bytes, language: Optional[str] = None) -> str:
         if not self.model:
             return ""
             
@@ -42,14 +43,21 @@ class CanaryModel(IASRModel):
         try:
             sf.write(tmp_path, audio_np, 16000, format='WAV')
             
-            # Canary requires source_lang and target_lang (for ASR they are the same)
-            # Defaulting to 'en' if not provided
-            lang = language if language else "en"
-            results = self.model.transcribe([tmp_path], source_lang=lang, target_lang=lang)
+            # Canary requires task and source_lang tags. 
+            # Default task is 'asr'. source_lang should be ISO code (en, es, de, fr).
+            # If language isn't provided, it defaults to English.
+            src_lang = language if language else "en"
             
-            if isinstance(results, list) and len(results) > 0:
-                text = results[0] # Returns list of strings
-                return str(text).strip()
+            results = self.model.transcribe(
+                [tmp_path], 
+                task="asr", 
+                source_lang=src_lang, 
+                target_lang=src_lang,
+                pnc="yes"
+            )
+            
+            if results and len(results) > 0:
+                return str(results[0].text).strip()
             return ""
             
         except Exception as e:
