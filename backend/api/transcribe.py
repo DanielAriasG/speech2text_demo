@@ -3,7 +3,7 @@ import soundfile as sf
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from backend.services.audio_service import AudioService
 from backend.services.transcription_service import TranscriptionService
-from backend.diarization.speaker_id import PyannoteDiarization
+from backend.diarization.speaker_id import PyannoteDiarization, SortformerDiarization, DiariZenDiarization
 from backend.services.export_service import ExportService
 import base64
 from typing import Optional
@@ -11,13 +11,20 @@ from typing import Optional
 router = APIRouter()
 audio_service = AudioService()
 transcription_service = TranscriptionService()
-diarization_service = PyannoteDiarization()
 export_service = ExportService()
+
+# Load both models into memory on startup
+diarization_registry = {
+    "pyannote": PyannoteDiarization(),
+    "sortformer": SortformerDiarization(),
+    "diarizen": DiariZenDiarization()
+}
 
 @router.post("/transcribe")
 async def transcribe_audio(
     model_name: str = Form("whisper"),
-    language: Optional[str] = Form(None), # Language propagation added
+    diarization_model: str = Form("sortformer"), # New form field for UI!
+    language: Optional[str] = Form(None),
     file: UploadFile = File(...)
 ):
     # 1. Read file
@@ -26,8 +33,9 @@ async def transcribe_audio(
     # 2. Preprocess audio
     normalized_audio = audio_service.preprocess(audio_data)
 
-    # 3. Diarization First
-    diarization_segments = diarization_service.diarize(normalized_audio)
+    # 3. Dynamic Diarization Selection
+    diarizer = diarization_registry.get(diarization_model, diarization_registry["sortformer"])
+    diarization_segments = diarizer.diarize(normalized_audio)
     
     formatted_diarization = []
     transcription_parts = []

@@ -7,11 +7,12 @@ from backend.core.export_interface import IExportService
 
 class ExportService(IExportService):
     def __init__(self):
-        # Download a Unicode font (DejaVu Sans) to support Multilingual chars in PDF
-        self.font_path = "DejaVuSans.ttf"
+        # Download a Unicode font (Roboto) to support Multilingual chars in PDF
+        self.font_path = "Roboto-Regular.ttf"
         if not os.path.exists(self.font_path):
             try:
-                url = "https://raw.githubusercontent.com/dejavu-fonts/dejavu-fonts/master/ttf/DejaVuSans.ttf"
+                # Using a highly stable direct link from the official Google Fonts repository
+                url = "https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Regular.ttf"
                 urllib.request.urlretrieve(url, self.font_path)
             except Exception as e:
                 print(f"Warning: Failed to download Unicode font. {e}")
@@ -34,8 +35,8 @@ class ExportService(IExportService):
         
         # Apply the Unicode font if it downloaded successfully
         if os.path.exists(self.font_path):
-            pdf.add_font("DejaVu", "", self.font_path)
-            pdf.set_font("DejaVu", size=12)
+            pdf.add_font("Roboto", "", self.font_path, uni=True)
+            pdf.set_font("Roboto", size=12)
         else:
             pdf.set_font("Helvetica", size=12)
             # Fallback to prevent 500 error if font download failed

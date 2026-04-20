@@ -4,6 +4,7 @@ import './App.css'
 function App() {
   const [file, setFile] = useState(null)
   const [model, setModel] = useState('whisper')
+  const [diarizationModel, setDiarizationModel] = useState('pyannote')
   const [transcription, setTranscription] = useState('')
   const [diarization, setDiarization] = useState([])
   const [exports, setExports] = useState(null)
@@ -36,6 +37,7 @@ function App() {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('model_name', model)
+    formData.append('diarization_model', diarizationModel)
 
     try {
       const response = await fetch('http://localhost:8000/api/transcribe', {
@@ -91,7 +93,7 @@ function App() {
       accumulatedChunksRef.current = []
 
       socketRef.current = new WebSocket('ws://localhost:8000/api/ws/stream')
-      
+
       socketRef.current.onmessage = (event) => {
         setLiveTranscription(event.data)
       }
@@ -143,9 +145,9 @@ function App() {
             <button onClick={stopStreaming} style={{ backgroundColor: '#F44336' }}>Stop Streaming</button>
           )}
           {liveTranscription && (
-             <div className="result" style={{ marginTop: '1rem', backgroundColor: '#e3f2fd' }}>
-               <p>{liveTranscription}</p>
-             </div>
+            <div className="result" style={{ marginTop: '1rem', backgroundColor: '#e3f2fd' }}>
+              <p>{liveTranscription}</p>
+            </div>
           )}
         </div>
 
@@ -165,6 +167,15 @@ function App() {
             </select>
           </div>
 
+          <div className="input-group">
+            <label htmlFor="diarization-select">Select Diarization Model:</label>
+            <select id="diarization-select" value={diarizationModel} onChange={(e) => setDiarizationModel(e.target.value)}>
+              <option value="pyannote">Pyannote 3.1</option>
+              <option value="sortformer">NeMo Sortformer</option>
+              <option value="diarizen">DiariZen Meeting Base</option>
+            </select>
+          </div>
+
           <button onClick={handleTranscribe} disabled={loading}>
             {loading ? 'Transcribing...' : 'Transcribe File'}
           </button>
@@ -180,11 +191,11 @@ function App() {
                 const speakerNum = parseInt(segment.speaker.replace(/[^0-9]/g, '')) || 0;
                 const colors = ['#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#F44336', '#00BCD4'];
                 const color = colors[speakerNum % colors.length];
-                
+
                 return (
                   <div key={idx} className="speaker-segment">
-                    <span 
-                      className="speaker-badge" 
+                    <span
+                      className="speaker-badge"
                       style={{ backgroundColor: color }}
                     >
                       {segment.speaker} ({segment.start}s - {segment.end}s)
