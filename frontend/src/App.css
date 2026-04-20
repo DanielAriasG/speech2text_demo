@@ -1,115 +1,91 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-green: #026873;
+  --primary-coral: #ED6D7C;
+  --secondary-green: #41B9C6;
+  --secondary-pink: #F1A6A0;
+  --secondary-grey: #C1D0D9;
 }
 
-.App {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
+.app-container {
+  background-color: #f8fafc;
+  font-family: 'Inter', sans-serif;
 }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 2rem;
-  border-radius: 12px;
-  background-color: #f9f9f9;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 600px;
+/* Brand Text Colors */
+.text-primary-green {
+  color: var(--primary-green);
 }
 
-.input-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-  width: 100%;
+.text-primary-coral {
+  color: var(--primary-coral);
 }
 
-.input-group label {
-  font-weight: bold;
+.text-secondary-grey {
+  color: var(--secondary-grey);
 }
 
-.input-group input,
-.input-group select {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
+/* Brand Background Colors */
+.bg-primary-green {
+  background-color: var(--primary-green);
+}
+
+.bg-primary-coral {
+  background-color: var(--primary-coral);
+}
+
+.bg-secondary-green {
+  background-color: var(--secondary-green);
+}
+
+.bg-secondary-pink {
+  background-color: var(--secondary-pink);
+}
+
+.bg-secondary-grey {
+  background-color: var(--secondary-grey);
+}
+
+/* Brand Border Colors */
+.border-secondary-grey {
+  border-color: var(--secondary-grey);
+}
+
+/* Custom Component States */
+.dropzone-active {
+  background-color: rgba(65, 185, 198, 0.05);
+}
+
+.dropzone-inactive {
+  background-color: #fafafa;
+}
+
+.focus-ring-primary:focus {
+  outline: none;
+  --tw-ring-color: var(--primary-green);
+  box-shadow: 0 0 0 2px var(--tw-ring-color);
+}
+
+.soft-card-shadow {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom scrollbar for transcription viewer */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
   border-radius: 4px;
 }
 
-button {
-  background-color: #646cff;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #535bf2;
-}
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.error {
-  color: #ff4d4d;
-  font-weight: 500;
-}
-
-.result {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  text-align: left;
-}
-
-.result h2 {
-  margin-top: 0;
-  font-size: 1.25rem;
-}
-
-.result p {
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.speaker-segment {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  text-align: left;
-}
-
-.speaker-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--secondary-grey);
   border-radius: 4px;
-  color: white;
-  font-weight: bold;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
 }
 
-.speaker-segment p {
-  margin: 0;
-  line-height: 1.6;
-  color: #333;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-green);
 }
