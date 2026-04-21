@@ -1,4 +1,6 @@
 import io
+import os
+import tempfile
 import librosa
 import soundfile as sf
 from backend.core.audio_interface import IAudioService
@@ -16,9 +18,17 @@ class AudioService(IAudioService):
         """
         Normalize audio to 16kHz mono.
         """
-        # Load audio from bytes
-        audio_fp = io.BytesIO(audio_data)
-        y, sr = librosa.load(audio_fp, sr=16000, mono=True)
+        # Write to temp file to support WebM/Ogg browser blobs natively via ffmpeg
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+            tmp.write(audio_data)
+            tmp_path = tmp.name
+
+        try:
+            # Load audio from physical temp path instead of BytesIO
+            y, sr = librosa.load(tmp_path, sr=16000, mono=True)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
         # Save processed audio to bytes
         output_fp = io.BytesIO()
