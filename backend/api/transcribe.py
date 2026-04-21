@@ -7,6 +7,7 @@ from backend.diarization.speaker_id import PyannoteDiarization, SortformerDiariz
 from backend.services.export_service import ExportService
 import base64
 from typing import Optional
+from pydantic import BaseModel
 
 router = APIRouter()
 audio_service = AudioService()
@@ -20,10 +21,28 @@ diarization_registry = {
     "diarizen": DiariZenDiarization()
 }
 
+class ExportRequest(BaseModel):
+    diarization: list
+
+@router.post("/export")
+async def generate_exports(req: ExportRequest):
+    """Generates physical files instantly for stream completion hooks."""
+    export_txt = export_service.export_to_txt(req.diarization)
+    export_docx = export_service.export_to_docx(req.diarization)
+    export_pdf = export_service.export_to_pdf(req.diarization)
+
+    return {
+        "exports": {
+            "txt": base64.b64encode(export_txt).decode("utf-8"),
+            "docx": base64.b64encode(export_docx).decode("utf-8"),
+            "pdf": base64.b64encode(export_pdf).decode("utf-8")
+        }
+    }
+
 @router.post("/transcribe")
 async def transcribe_audio(
     model_name: str = Form("whisper"),
-    diarization_model: str = Form("sortformer"), # New form field for UI!
+    diarization_model: str = Form("sortformer"), 
     language: Optional[str] = Form(None),
     file: UploadFile = File(...)
 ):
@@ -82,10 +101,10 @@ async def transcribe_audio(
 
     full_transcription = " ".join(transcription_parts)
 
-    # 5. Export results
-    export_txt = export_service.export_to_txt(full_transcription)
-    export_docx = export_service.export_to_docx(full_transcription)
-    export_pdf = export_service.export_to_pdf(full_transcription)
+    # 5. Export results utilizing the new formatted arrays
+    export_txt = export_service.export_to_txt(formatted_diarization)
+    export_docx = export_service.export_to_docx(formatted_diarization)
+    export_pdf = export_service.export_to_pdf(formatted_diarization)
 
     return {
         "transcription": full_transcription,
