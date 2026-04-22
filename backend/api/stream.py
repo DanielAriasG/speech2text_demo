@@ -1,16 +1,19 @@
 import io
 import json
 import asyncio
+import base64
 import soundfile as sf
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from backend.services.transcription_service import TranscriptionService
 from backend.services.audio_service import AudioService
+from backend.services.export_service import ExportService
 from backend.api.transcribe import diarization_registry
 from typing import Optional
 
 router = APIRouter()
 audio_service = AudioService()
 transcription_service = TranscriptionService()
+export_service = ExportService()
 
 @router.websocket("/stream")
 async def websocket_endpoint(
@@ -75,16 +78,26 @@ async def websocket_endpoint(
                                 })
                                 transcription_parts.append(segment_text.strip())
                                 
+                    # Generate live exports based on the current state of transcription
+                    # Note: We pass the formatted_diarization to generate consistent multi-format files
+                    export_txt = export_service.export_to_txt(formatted_diarization)
+                    export_docx = export_service.export_to_docx(formatted_diarization)
+                    export_pdf = export_service.export_to_pdf(formatted_diarization)
+
                     return {
                         "transcription": " ".join(transcription_parts),
-                        "diarization": formatted_diarization
+                        "diarization": formatted_diarization,
+                        "exports": {
+                            "txt": base64.b64encode(export_txt).decode("utf-8"),
+                            "docx": base64.b64encode(export_docx).decode("utf-8"),
+                            "pdf": base64.b64encode(export_pdf).decode("utf-8")
+                        }
                     }
                 except Exception as e:
                     print(f"Error during stream processing: {e}")
                     return None
 
             # Execute the heavy workload in a separate asynchronous thread pool.
-            # This prevents the FastAPI event loop from stalling, allowing concurrent connections.
             result = await asyncio.to_thread(process_audio_chunk, data)
             
             # Send the structured JSON response back to the React UI
