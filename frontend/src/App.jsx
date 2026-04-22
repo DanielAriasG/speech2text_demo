@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import './App.css'; // Extracted inline styles to the external CSS file
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -234,6 +235,10 @@ export default function App() {
           if (parsedData.diarization && Array.isArray(parsedData.diarization)) {
             setDiarization(parsedData.diarization);
           }
+          // Handle incoming live generated exports mapped in the streaming response
+          if (parsedData.exports) {
+            setExports(parsedData.exports);
+          }
         } else {
           // Absolute fallback if parsing fails completely
           setTranscription(event.data);
@@ -359,53 +364,6 @@ export default function App() {
 
   return (
     <div className="app-container min-h-screen py-12 px-4">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        :root {
-          --primary-green: #026873;
-          --primary-coral: #ED6D7C;
-          --secondary-green: #41B9C6;
-          --secondary-pink: #F1A6A0;
-          --secondary-grey: #C1D0D9;
-        }
-
-        .app-container {
-          background-color: #f8fafc;
-          font-family: 'Inter', sans-serif;
-        }
-
-        .text-primary-green { color: var(--primary-green); }
-        .text-primary-coral { color: var(--primary-coral); }
-        .text-secondary-grey { color: var(--secondary-grey); }
-
-        .bg-primary-green { background-color: var(--primary-green); }
-        .bg-primary-coral { background-color: var(--primary-coral); }
-        .bg-secondary-green { background-color: var(--secondary-green); }
-        .bg-secondary-pink { background-color: var(--secondary-pink); }
-        .bg-secondary-grey { background-color: var(--secondary-grey); }
-
-        .border-secondary-grey { border-color: var(--secondary-grey); }
-
-        .dropzone-active { background-color: rgba(65, 185, 198, 0.05); }
-        .dropzone-inactive { background-color: #fafafa; }
-
-        .focus-ring-primary:focus {
-          outline: none;
-          --tw-ring-color: var(--primary-green);
-          box-shadow: 0 0 0 2px var(--tw-ring-color);
-        }
-
-        .soft-card-shadow {
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-        }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--secondary-grey); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--primary-green); }
-      `}</style>
-
       {/* Page Header */}
       <header className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-primary-green flex items-center justify-center gap-3">
